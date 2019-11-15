@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
 	
@@ -24,11 +25,9 @@ public class Main {
 	
 	public static void main(String[] args) {
 		try {
-			int a, b;
-			a = 3;
-			b = 4;
-			//Tutaj dodać skaner który to wczyta
-			
+			Scanner reader = new Scanner(System.in);  
+	    int a = reader.nextInt();  
+			int b = reader.nextInt();
 			
 			//Building the net
 			//Places
