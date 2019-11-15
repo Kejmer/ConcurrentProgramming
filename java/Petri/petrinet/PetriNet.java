@@ -5,20 +5,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Queue;
 import java.util.HashSet;
+import java.util.concurrent.Semaphore;
+
 
 public class PetriNet<T> {
 	
-	private class ReachableHelper<T> {
-		Set<Map<T, Integer>> possibleTokenization = new HashSet<>();
-	}
+	private Semaphore mutex;
 	
-	private final boolean fair;
 	private Map<T, Integer> tokenization;
+	
 	private Queue<Thread> threadQueue = new Queue<Thread>();
 
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
 		this.tokenization = initial;
-		this.fair = fair;
+		this.mutex = new Semaphore(1, fair);
 	}
 	
 	private void generateReachable(Collection<Transition<T>> transitions, Set<Map<T, Integer>> possibleTokenization, Map<T, Integer> currentState) {
@@ -41,7 +41,21 @@ public class PetriNet<T> {
 	}
 
 	public Transition<T> fire(Collection<Transition<T>> transitions) throws InterruptedException {
-	
+		while (true) {
+			try {
+				mutex.acquire();
+				
+				for (Transition<T> t : transitions) {
+					if (allowedTransition(t, tokenization)) {
+						getNextState(t, tokenization);
+						return t;
+					}
+				}
+				
+			} finally {
+				mutex.release();
+			}
+		}
 	}
 	
 	private IncompatibleTransition createException(T t, String type) {
