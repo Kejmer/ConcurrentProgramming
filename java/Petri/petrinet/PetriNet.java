@@ -2,6 +2,7 @@ package petrinet;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.Queue;
 import java.util.HashSet;
@@ -14,8 +15,6 @@ public class PetriNet<T> {
 	
 	private Map<T, Integer> tokenization;
 	
-	private Queue<Thread> threadQueue = new Queue<Thread>();
-
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
 		this.tokenization = initial;
 		this.mutex = new Semaphore(1, fair);
@@ -24,7 +23,7 @@ public class PetriNet<T> {
 	private void generateReachable(Collection<Transition<T>> transitions, Set<Map<T, Integer>> possibleTokenization, Map<T, Integer> currentState) {
 		for (Transition<T> t : transitions) {
 			if (allowedTransition(t, currentState)) {
-				Map<T, Integer> tokenizationCopy = currentState.clone();
+				Map<T, Integer> tokenizationCopy = new HashMap<T, Integer>(currentState);
 				getNextState(t, tokenizationCopy);
 				if (possibleTokenization.contains(tokenizationCopy)) {
 					possibleTokenization.add(tokenizationCopy);
@@ -44,7 +43,6 @@ public class PetriNet<T> {
 		while (true) {
 			try {
 				mutex.acquire();
-				
 				for (Transition<T> t : transitions) {
 					if (allowedTransition(t, tokenization)) {
 						getNextState(t, tokenization);
@@ -68,23 +66,23 @@ public class PetriNet<T> {
 	
 	//Zakładamy że przejście jest dozwolone
 	private void getNextState(Transition<T> trans, Map<T, Integer> state) {
-		for (Map.Entry<T, Integer> entry : trans.getInput()) {
+		for (Map.Entry<T, Integer> entry : trans.getInput().entrySet()) {
 			state.replace(entry.getKey(), state.get(entry.getKey()) - entry.getValue());
 		}
 		
 		for (T entry : trans.getReset()) {
-			state.replace(T, 0);
+			state.replace(entry, 0);
 		}
 		
-		for (Map.Entry<T, Integer> entry : trans.getOutput()) {
+		for (Map.Entry<T, Integer> entry : trans.getOutput().entrySet()) {
 			state.replace(entry.getKey(), state.get(entry.getKey()) + entry.getValue());
 		}
 	}
 	
-	private boolean allowedTransition(Transition<T> trans, Map<T, Integer> currentTokenization) throws IncompatibleTransition {
+	private boolean allowedTransition(Transition<T> trans, Map<T, Integer> currentTokenization) {//} throws IncompatibleTransition {
 		for (Map.Entry<T, Integer> entry : trans.getInput().entrySet()) {
 			if (currentTokenization.containsKey(entry.getKey())) {
-				throw createException(entry.getKey(), "input");
+				// throw createException(entry.getKey(), "input");
 			}
 			if (currentTokenization.get(entry.getKey()) < entry.getValue()) {
 				return false;
@@ -93,19 +91,19 @@ public class PetriNet<T> {
 		
 		for (Map.Entry<T, Integer> entry : trans.getOutput().entrySet()) {
 			if (currentTokenization.containsKey(entry.getKey())) {
-				throw createException(entry.getKey(), "output");
+				// throw createException(entry.getKey(), "output");
 			}
 		}
 		
 		for (T t : trans.getReset()) {
 			if (currentTokenization.containsKey(t)) {
-				throw createException(t, "reset");
+				// throw createException(t, "reset");
 			}
 		}
 		
 		for (T t : trans.getInhibitor()) {
 			if (currentTokenization.containsKey(t)) {
-				throw createException(t, "inhibitor");
+				// throw createException(t, "inhibitor");
 			}
 			if (currentTokenization.get(t) > 0) {
 				return false;
