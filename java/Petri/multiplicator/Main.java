@@ -16,9 +16,9 @@ public class Main {
 	
 	public static void main(String[] args) {
 		Scanner reader = new Scanner(System.in);  
-    int a = reader.nextInt();  
-		int b = reader.nextInt();
-		
+		int a = reader.nextInt();  
+	 	int b = reader.nextInt();
+	 	
 		//Building the net
 		//Places
 		Map<Place, Integer> begin = new HashMap<>();
