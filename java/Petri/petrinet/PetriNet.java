@@ -12,8 +12,8 @@ public class PetriNet<T> {
 		Set<Map<T, Integer>> possibleTokenization = new HashSet<>();
 	}
 	
-	private Map<T, Integer> tokenization;
 	private final boolean fair;
+	private Map<T, Integer> tokenization;
 	private Queue<Thread> threadQueue = new Queue<Thread>();
 
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
@@ -54,7 +54,17 @@ public class PetriNet<T> {
 	
 	//Zakładamy że przejście jest dozwolone
 	private void getNextState(Transition<T> trans, Map<T, Integer> state) {
+		for (Map.Entry<T, Integer> entry : trans.getInput()) {
+			state.replace(entry.getKey(), state.get(entry.getKey()) - entry.getValue());
+		}
 		
+		for (T entry : trans.getReset()) {
+			state.replace(T, 0);
+		}
+		
+		for (Map.Entry<T, Integer> entry : trans.getOutput()) {
+			state.replace(entry.getKey(), state.get(entry.getKey()) + entry.getValue());
+		}
 	}
 	
 	private boolean allowedTransition(Transition<T> trans, Map<T, Integer> currentTokenization) throws IncompatibleTransition {
