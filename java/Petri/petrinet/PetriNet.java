@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.Queue;
 import java.util.HashSet;
 import java.util.concurrent.Semaphore;
+import java.util.LinkedList;
 
 
 public class PetriNet<T> {
@@ -14,9 +15,12 @@ public class PetriNet<T> {
 	private Semaphore mutex;
 	
 	private Map<T, Integer> tokenization;
-	
+	private final boolean fair;
+	private Queue<Semaphore> threadQueue = new LinkedList<>(); 
+
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
 		this.tokenization = initial;
+		this.fair = fair;
 		this.mutex = new Semaphore(1, fair);
 	}
 	
@@ -35,24 +39,39 @@ public class PetriNet<T> {
 
 	public Set<Map<T, Integer>> reachable(Collection<Transition<T>> transitions) {
 		Set<Map<T, Integer>> possibleTokenization = new HashSet<>();
+		Map<T, Integer> tokenizationCopy;
+		try {
+			mutex.acquire();
+			tokenizationCopy = new HashMap<T, Integer>(tokenization);
+			mutex.release();
+		} catch (InterruptedException e) {
+			return possibleTokenization;
+		}
+		possibleTokenization.add(tokenizationCopy);
 		generateReachable(transitions, possibleTokenization, tokenization);
 		return possibleTokenization;
 	}
+	
+	private void wakeUpThreads() {
+		while (!threadQueue.isEmpty()) {
+			threadQueue.poll().release();
+		}
+	}
 
 	public Transition<T> fire(Collection<Transition<T>> transitions) throws InterruptedException {
+		Semaphore localSemaphore = new Semaphore(0, fair);
 		while (true) {
-			try {
-				mutex.acquire();
-				for (Transition<T> t : transitions) {
-					if (allowedTransition(t, tokenization)) {
-						getNextState(t, tokenization);
-						return t;
-					}
+			mutex.acquire();
+			for (Transition<T> t : transitions) {
+				if (allowedTransition(t, tokenization)) {
+					getNextState(t, tokenization);
+					wakeUpThreads();
+					mutex.release();
+					return t;
 				}
-				
-			} finally {
-				mutex.release();
 			}
+			localSemaphore.acquire();
+		
 		}
 	}
 	
