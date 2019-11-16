@@ -11,10 +11,10 @@ public class Transition<T> {
 	private final Collection<T> inhibitor;
 
   public Transition(Map<T, Integer> input, Collection<T> reset, Collection<T> inhibitor, Map<T, Integer> output) {
-  	this.input = input;
-  	this.output = output;
-  	this.reset = reset;
-  	this.inhibitor = inhibitor;
+  	this.input = input.clone();
+  	this.output = output.clone();
+  	this.reset = reset.clone();
+  	this.inhibitor = inhibitor.clone();
   }
   
   public Map<T, Integer> getInput() {

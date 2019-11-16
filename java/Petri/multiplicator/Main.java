@@ -37,7 +37,7 @@ public class Main {
 		inhibitor.add(Place.BufferA);
 		inhibitor.add(Place.BufferB);
 		
-		transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+		transitions.add(new Transition<Place>(input, empty, inhibitor, output));
 		input.clear();
 		output.clear();
 		inhibitor.clear();
@@ -49,7 +49,7 @@ public class Main {
 		output.put(Place.BufferB, 1);
 		output.put(Place.BufferA, 1);
 		
-		transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+		transitions.add(new Transition<Place>(input, empty, inhibitor, output));
 		input.clear();
 		output.clear();
 		
@@ -58,7 +58,7 @@ public class Main {
 		output.put(Place.InputB, 1);
 		inhibitor.add(Place.BufferA);
 		
-		transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+		transitions.add(new Transition<Place>(input, empty, inhibitor, output));
 		input.clear();
 		output.clear();
 		inhibitor.clear();
@@ -67,7 +67,7 @@ public class Main {
 		input.put(Place.BufferB, 1);
 		inhibitor.add(Place.InputA, 1);
 		
-		transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
 		input.clear();
 		inhibitor.clear();
 		
@@ -75,7 +75,7 @@ public class Main {
 		inhibitor.add(Place.InputA);
 		inhibitor.add(Place.BufferA);
 		
-		Transition<Place> finalTransition = new Transition<>(input.clone(), empty.clone(), inhibitor.clone(), output.clone());
+		Transition<Place> finalTransition = new Transition<Place>(input, empty, inhibitor, output);
 		inhibitor.clear();
 		
 		//Petri net is finished
