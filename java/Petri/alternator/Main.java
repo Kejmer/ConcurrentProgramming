@@ -7,6 +7,30 @@ public class Main {
 	private static enum Place {
 		CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
 	}
+  
+  private class Writer extends Runnable {
+    private String name;
+    private Transition<Place> critical;
+    private Transition<Place> memory;
+    private PetriNet net;
+    
+    public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet net) {
+      this.name = name;
+      this.critical = critical;
+      this.memory = memory;
+      this.net = net;
+    }
+    
+    @Override
+    public void run() {
+      while (true) {
+        net.fire(Collections.singleton(critical));
+        System.out.println(name);
+        System.out.println(memory);
+        net.fire(Collections.singleton(memory));
+      }
+    }
+  }
 	
 	public static void main(String[] args) {
   	//Building the net
