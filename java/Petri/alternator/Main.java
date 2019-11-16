@@ -22,10 +22,11 @@ public class Main {
     // Print A
     output.put(Place.CriticalA, 1);
     output.add(Place.MemoryA, 1);
+    inhibitor.add(Place.MemoryA);
     inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.CriticalC);
     
-    transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     output.clear();
     inhibitor.clear();
     
@@ -33,22 +34,51 @@ public class Main {
     output.put(Place.CriticalB, 1);
     output.add(Place.MemoryB, 1);
     inhibitor.add(Place.CriticalA);
+    inhibitor.add(Place.MemoryB);
     inhibitor.add(Place.CriticalC);
     
-    transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+    
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     output.clear();
     inhibitor.clear();
     
     // Print C
     output.put(Place.CriticalC, 1);
     output.add(Place.MemoryC, 1);
-    inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.CriticalA);
+    inhibitor.add(Place.CriticalB);
+    inhibitor.add(Place.MemoryC);
     
-    transitions.add(new Transition<Place>(input.clone(), empty.clone(), inhibitor.clone(), output.clone()));
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     output.clear();
     inhibitor.clear();
-   
+    
+    // Release A
+    input.put(Place.CriticalA, 1);
+    reset.add(Place.CriticalB);
+    reset.add(Place.CriticalC);
+  
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    input.clear();
+    reset.clear();
+    
+    // Release B
+    reset.add(Place.CriticalA);
+    input.put(Place.CriticalB, 1);
+    reset.add(Place.CriticalC);
+  
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    input.clear();
+    reset.clear();
+    
+    // Release C
+    reset.add(Place.CriticalA);
+    reset.add(Place.CriticalB);
+    input.put(Place.CriticalC, 1);
+  
+    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    input.clear();
+    reset.clear();
     
     //Petri net is finished
     try {
