@@ -46,7 +46,7 @@ public class PetriNet<T> {
 				
 				if (!possibleTokenization.contains(tokenizationCopy)) {
 					possibleTokenization.add(tokenizationCopy);
-					generateReachable(transitions, possibleTokenization, currentState);
+					generateReachable(transitions, possibleTokenization, tokenizationCopy);
 				}
 			}
 		}

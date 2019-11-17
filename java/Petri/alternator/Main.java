@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.Set;
 
 import petrinet.PetriNet;
 import petrinet.Transition;
@@ -126,9 +127,18 @@ private static enum Place {
     
     //Petri net is finished
     
+    Set<Map<Place, Integer>> possibleTokenization = net.reachable(transitions);
+    
     Thread aThread = new Thread (new Writer("A", criticalA, memoryA, net));
     Thread bThread = new Thread (new Writer("B", criticalB, memoryB, net));
     Thread cThread = new Thread (new Writer("C", criticalC, memoryC, net));
+    
+    ArrayList<Place> criticalSection = new ArrayList<>();
+    criticalSection.add(Place.CriticalA);
+    criticalSection.add(Place.CriticalB);
+    criticalSection.add(Place.CriticalC);
+    
+    
     
     aThread.setName("Wątek A");
     bThread.setName("Wątek B");
@@ -139,11 +149,27 @@ private static enum Place {
         bThread.start();
         cThread.start();
         
-        Thread.sleep(30000);
+        Thread.sleep(100);
 
         aThread.interrupt();
         bThread.interrupt();
         cThread.interrupt();
+        System.out.println("ROZMIAR TOKENIZACJI == " + possibleTokenization.size());
+        
+        boolean isSafe = true;
+        
+        for (Map<Place, Integer> tokenization : possibleTokenization) {
+            int criticalSum = 0;
+            for (Place p : criticalSection) {
+                criticalSum += tokenization.getOrDefault(p, 0);
+            } 
+            if (criticalSum > 1) {
+                isSafe = false;
+            }
+        }
+        
+        System.out.println("WĄTEK JEST " + (isSafe ? "BEZPIECZNY" : "NIEZABEZPIECZONY"));        
+        
     } catch (InterruptedException e) {
         System.out.println("Przerwano wątek główny");
     }
