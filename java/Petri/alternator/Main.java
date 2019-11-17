@@ -4,10 +4,10 @@ import petrinet.*;
 
 public class Main {
 	
-	private static enum Place {
-		CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
-	}
-  
+private static enum Place {
+	CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
+}
+
   private class Writer extends Runnable {
     private String name;
     private Transition<Place> critical;

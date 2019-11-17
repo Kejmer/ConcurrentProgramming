@@ -15,8 +15,7 @@ public class PetriNet<T> {
 	private Semaphore mutex;
 	
 	private Map<T, Integer> tokenization;
-	private final boolean fair;
-	private Queue<Semaphore> threadQueue = new LinkedList<>(); 
+	private Collection<Semaphore> threadQueue; 
 
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
 		
@@ -26,13 +25,16 @@ public class PetriNet<T> {
 				toErase.add(entry);
 			}
 		}
-		
 		for (T entry : toErase) {
 			initial.remove(entry);
 		}
 		
 		this.tokenization = initial;
-		this.fair = fair;
+		if (fair) {
+			threadQueue = new LinkedList<Semaphore>();
+		} else {
+			threadQueue = new HashSet<Semaphore>(); //Non deterministic iteration
+		}
 		this.mutex = new Semaphore(1, fair);
 	}
 	
@@ -67,13 +69,14 @@ public class PetriNet<T> {
 	}
 	
 	private void wakeUpThreads() {
-		while (!threadQueue.isEmpty()) {
-			threadQueue.poll().release();
+		for (Semaphore s : threadQueue) {
+			s.release();
 		}
+		threadQueue.clear();
 	}
 
 	public Transition<T> fire(Collection<Transition<T>> transitions) throws InterruptedException {
-		Semaphore localSemaphore = new Semaphore(0, fair);
+		Semaphore localSemaphore = new Semaphore(0);
 		while (true) {
 			mutex.acquire();
 			for (Transition<T> t : transitions) {
@@ -85,7 +88,6 @@ public class PetriNet<T> {
 				}
 			}
 			localSemaphore.acquire();
-		
 		}
 	}
 	
