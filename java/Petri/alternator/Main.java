@@ -149,7 +149,7 @@ private static enum Place {
         bThread.start();
         cThread.start();
         
-        Thread.sleep(100);
+        Thread.sleep(30000);
 
         aThread.interrupt();
         bThread.interrupt();
