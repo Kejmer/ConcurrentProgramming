@@ -14,6 +14,32 @@ public class Main {
 		InputA, InputB, BufferA, BufferB, Result
 	}
 	
+	private static class Counter implements Runnable {
+    private Collection<Transition<Place>> transitions;
+    private PetriNet net;
+    private int idx;
+    private int numOfTransitions;
+
+    public Counter(Collection<Transition<Place>> transitions, PetriNet net, int idx) {
+      this.transitions = transitions;
+      this.net = net;
+      this.idx = idx
+      this.numOfTransitions = 0;
+    }
+
+    @Override
+    public void run() {
+      try {
+        while (true) {
+          net.fire(transitions);
+          numOfTransitions++;
+        }
+      } catch (InterruptedException e) {
+      	System.out.println("Wątek " + idx + " wykonał " + numOfTransitions + " przejść.")
+      }
+    }
+	}
+	
 	public static void main(String[] args) {
 		Scanner reader = new Scanner(System.in);  
 		int a = reader.nextInt();  
@@ -74,14 +100,39 @@ public class Main {
 		//Final transition
 		inhibitor.add(Place.InputA);
 		inhibitor.add(Place.BufferA);
+		inhibitor.add(Place.BufferB);
 		
 		Transition<Place> finalTransition = new Transition<Place>(input, empty, inhibitor, output);
 		inhibitor.clear();
 		
 		//Petri net is finished
 		try {
+			ArrayList<Thread> workers = new ArrayList<>();
+			for (int i = 0; i < 4; i++) {
+				workers.add(new Thread(new Counter(transitions, net, i)));
+			}
+			for (Thread t : workers) {
+				t.start();
+			}
 			
-
+			net.fire(Collections.singleton(finalTransition));
+			
+			for (Thread t : workers) {
+				t.interupt();
+			}
+			
+			//Checking if every transition is no longer legal (except finalTransition)
+			Set<Map<Place, Integer>> possibleTokenization = net.rechable(transitions); 
+			
+			if (possibleTokenization.size() > 1) {
+				System.err.println("Niektóre przejścia wciąż są dozwolone")
+			} else {
+				for (Map<Place, Integer> tokenization : possibleTokenization) {
+					int result = tokenization.get(Place.Result);
+					System.out.println(result);
+				}
+			}
+ 
 		}
 		
 	}

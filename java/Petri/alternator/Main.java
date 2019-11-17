@@ -14,39 +14,39 @@ import petrinet.Transition;
 
 public class Main {
 	
-private static enum Place {
-	CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
-}
+    private static enum Place {
+        CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
+    }
 
-  private static class Writer implements Runnable {
-    private String name;
-    private Collection<Transition<Place>> critical;
-    private Collection<Transition<Place>> memory;
-    private PetriNet net;
-    private int numOfPrints;
+    private static class Writer implements Runnable {
+        private String name;
+        private Collection<Transition<Place>> critical;
+        private Collection<Transition<Place>> memory;
+        private PetriNet net;
+        private int numOfPrints;
     
-    public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet net) {
-      this.name = name;
-      this.critical = Collections.singleton(critical);
-      this.memory = Collections.singleton(memory);
-      this.net = net;
-    }
-    
-    @Override
-    public void run() {
-      try {
-        while (true) {
-          net.fire(critical);
-          numOfPrints++;
-          System.out.println(name);
-          System.out.println('.');
-          net.fire(memory);
+        public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet net) {
+            this.name = name;
+            this.critical = Collections.singleton(critical);
+            this.memory = Collections.singleton(memory);
+            this.net = net;
         }
-      } catch (InterruptedException e) {
-          System.out.println(name + " wykonał się " + numOfPrints + " razy!");
-      }
+    
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    net.fire(critical);
+                    numOfPrints++;
+                    System.out.println(name);
+                    System.out.println('.');
+                    net.fire(memory);
+                }
+            } catch (InterruptedException e) {
+                System.out.println(name + " wykonał się " + numOfPrints + " razy!");
+            }
+        }
     }
-  }
 	
 	public static void main(String[] args) {
   	//Building the net
