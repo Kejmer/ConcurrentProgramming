@@ -1,6 +1,15 @@
 package alternator;
 
-import petrinet.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.ArrayList;
+
+import petrinet.PetriNet;
+import petrinet.Transition;
 
 public class Main {
 	
@@ -8,7 +17,7 @@ private static enum Place {
 	CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
 }
 
-  private class Writer extends Runnable {
+  private class Writer implements Runnable {
     private String name;
     private Transition<Place> critical;
     private Transition<Place> memory;
@@ -24,10 +33,14 @@ private static enum Place {
     @Override
     public void run() {
       while (true) {
-        net.fire(Collections.singleton(critical));
-        System.out.println(name);
-        System.out.println(memory);
-        net.fire(Collections.singleton(memory));
+        try {
+            net.fire(Collections.singleton(critical));
+            System.out.println(name);
+            System.out.println(memory);
+            net.fire(Collections.singleton(memory));
+        } catch (InterruptedException e) {
+            System.out.println("Przerwano wątek dla " + name);
+        }
       }
     }
   }
@@ -36,7 +49,7 @@ private static enum Place {
   	//Building the net
     //Places
     Map<Place, Integer> begin = new HashMap<>();
-    PetriNet<Place, Integer> net = new PetriNet<>(begin, false);
+    PetriNet<Place> net = new PetriNet<>(begin, false);
     
     //Transitions
     ArrayList<Transition<Place>> transitions = new ArrayList<>();
@@ -45,7 +58,7 @@ private static enum Place {
     
     // Print A
     output.put(Place.CriticalA, 1);
-    output.add(Place.MemoryA, 1);
+    output.put(Place.MemoryA, 1);
     inhibitor.add(Place.MemoryA);
     inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.CriticalC);
@@ -56,11 +69,10 @@ private static enum Place {
     
     // Print B
     output.put(Place.CriticalB, 1);
-    output.add(Place.MemoryB, 1);
+    output.put(Place.MemoryB, 1);
     inhibitor.add(Place.CriticalA);
     inhibitor.add(Place.MemoryB);
     inhibitor.add(Place.CriticalC);
-    
     
     transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     output.clear();
@@ -68,7 +80,7 @@ private static enum Place {
     
     // Print C
     output.put(Place.CriticalC, 1);
-    output.add(Place.MemoryC, 1);
+    output.put(Place.MemoryC, 1);
     inhibitor.add(Place.CriticalA);
     inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.MemoryC);
@@ -79,36 +91,33 @@ private static enum Place {
     
     // Release A
     input.put(Place.CriticalA, 1);
-    reset.add(Place.CriticalB);
-    reset.add(Place.CriticalC);
+    empty.add(Place.CriticalB);
+    empty.add(Place.CriticalC);
   
     transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     input.clear();
-    reset.clear();
+    empty.clear();
     
     // Release B
-    reset.add(Place.CriticalA);
+    empty.add(Place.CriticalA);
     input.put(Place.CriticalB, 1);
-    reset.add(Place.CriticalC);
+    empty.add(Place.CriticalC);
   
     transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     input.clear();
-    reset.clear();
+    empty.clear();
     
     // Release C
-    reset.add(Place.CriticalA);
-    reset.add(Place.CriticalB);
+    empty.add(Place.CriticalA);
+    empty.add(Place.CriticalB);
     input.put(Place.CriticalC, 1);
   
     transitions.add(new Transition<Place>(input, empty, inhibitor, output));
     input.clear();
-    reset.clear();
+    empty.clear();
     
     //Petri net is finished
-    try {
-      
-
-    }
+    
     
   }
 }

@@ -60,6 +60,7 @@ public class PetriNet<T> {
 			tokenizationCopy = new HashMap<T, Integer>(tokenization);
 			mutex.release();
 		} catch (InterruptedException e) {
+			mutex.release();
 			return possibleTokenization;
 		}
 				
