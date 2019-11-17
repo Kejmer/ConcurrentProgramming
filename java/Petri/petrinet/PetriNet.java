@@ -79,15 +79,17 @@ public class PetriNet<T> {
 	public Transition<T> fire(Collection<Transition<T>> transitions) throws InterruptedException {
 		Semaphore localSemaphore = new Semaphore(0);
 		while (true) {
-			mutex.acquire();
+			mutex.acquire();	
 			for (Transition<T> t : transitions) {
 				if (allowedTransition(t, tokenization)) {
 					getNextState(t, tokenization);
-					wakeUpThreads();
+					wakeUpThreads();					
 					mutex.release();
 					return t;
 				}
 			}
+			threadQueue.add(localSemaphore);
+			mutex.release();
 			localSemaphore.acquire();
 		}
 	}

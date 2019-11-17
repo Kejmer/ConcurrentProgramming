@@ -17,30 +17,32 @@ private static enum Place {
 	CriticalA, CriticalB, CriticalC, MemoryA, MemoryB, MemoryC
 }
 
-  private class Writer implements Runnable {
+  private static class Writer implements Runnable {
     private String name;
-    private Transition<Place> critical;
-    private Transition<Place> memory;
+    private Collection<Transition<Place>> critical;
+    private Collection<Transition<Place>> memory;
     private PetriNet net;
+    private int numOfPrints;
     
     public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet net) {
       this.name = name;
-      this.critical = critical;
-      this.memory = memory;
+      this.critical = Collections.singleton(critical);
+      this.memory = Collections.singleton(memory);
       this.net = net;
     }
     
     @Override
     public void run() {
-      while (true) {
-        try {
-            net.fire(Collections.singleton(critical));
-            System.out.println(name);
-            System.out.println(memory);
-            net.fire(Collections.singleton(memory));
-        } catch (InterruptedException e) {
-            System.out.println("Przerwano wątek dla " + name);
+      try {
+        while (true) {
+          net.fire(critical);
+          numOfPrints++;
+          System.out.println(name);
+          System.out.println('.');
+          net.fire(memory);
         }
+      } catch (InterruptedException e) {
+          System.out.println(name + " wykonał się " + numOfPrints + " razy!");
       }
     }
   }
@@ -63,7 +65,8 @@ private static enum Place {
     inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.CriticalC);
     
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> criticalA = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(criticalA);
     output.clear();
     inhibitor.clear();
     
@@ -74,7 +77,8 @@ private static enum Place {
     inhibitor.add(Place.MemoryB);
     inhibitor.add(Place.CriticalC);
     
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> criticalB = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(criticalB);
     output.clear();
     inhibitor.clear();
     
@@ -85,39 +89,64 @@ private static enum Place {
     inhibitor.add(Place.CriticalB);
     inhibitor.add(Place.MemoryC);
     
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> criticalC = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(criticalC);
     output.clear();
     inhibitor.clear();
     
     // Release A
     input.put(Place.CriticalA, 1);
-    empty.add(Place.CriticalB);
-    empty.add(Place.CriticalC);
+    empty.add(Place.MemoryB);
+    empty.add(Place.MemoryC);
   
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> memoryA = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(memoryA);
     input.clear();
     empty.clear();
     
     // Release B
-    empty.add(Place.CriticalA);
+    empty.add(Place.MemoryA);
     input.put(Place.CriticalB, 1);
-    empty.add(Place.CriticalC);
+    empty.add(Place.MemoryC);
   
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> memoryB = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(memoryB);
     input.clear();
     empty.clear();
     
     // Release C
-    empty.add(Place.CriticalA);
-    empty.add(Place.CriticalB);
+    empty.add(Place.MemoryA);
+    empty.add(Place.MemoryB);
     input.put(Place.CriticalC, 1);
   
-    transitions.add(new Transition<Place>(input, empty, inhibitor, output));
+    Transition<Place> memoryC = new Transition<Place>(input, empty, inhibitor, output);  
+    transitions.add(memoryC);
     input.clear();
     empty.clear();
     
     //Petri net is finished
     
+    Thread aThread = new Thread (new Writer("A", criticalA, memoryA, net));
+    Thread bThread = new Thread (new Writer("B", criticalB, memoryB, net));
+    Thread cThread = new Thread (new Writer("C", criticalC, memoryC, net));
+    
+    aThread.setName("Wątek A");
+    bThread.setName("Wątek B");
+    cThread.setName("Wątek C");
+    
+    try {
+        aThread.start();
+        bThread.start();
+        cThread.start();
+        
+        Thread.sleep(30000);
+
+        aThread.interrupt();
+        bThread.interrupt();
+        cThread.interrupt();
+    } catch (InterruptedException e) {
+        System.out.println("Przerwano wątek główny");
+    }
     
   }
 }
