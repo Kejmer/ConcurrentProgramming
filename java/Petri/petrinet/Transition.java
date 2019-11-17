@@ -2,6 +2,8 @@ package petrinet;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class Transition<T> {
 	
@@ -11,10 +13,10 @@ public class Transition<T> {
 	private final Collection<T> inhibitor;
 
   public Transition(Map<T, Integer> input, Collection<T> reset, Collection<T> inhibitor, Map<T, Integer> output) {
-  	this.input = input.clone();
-  	this.output = output.clone();
-  	this.reset = reset.clone();
-  	this.inhibitor = inhibitor.clone();
+  	this.input = new HashMap<T, Integer>(input);
+  	this.output = new HashMap<T, Integer>(output);
+  	this.reset = new HashSet<T>(reset);
+  	this.inhibitor = new HashSet<T>(inhibitor);
   }
   
   public Map<T, Integer> getInput() {

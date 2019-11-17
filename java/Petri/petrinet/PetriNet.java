@@ -19,6 +19,18 @@ public class PetriNet<T> {
 	private Queue<Semaphore> threadQueue = new LinkedList<>(); 
 
 	public PetriNet(Map<T, Integer> initial, boolean fair) {
+		
+		LinkedList<T> toErase = new LinkedList<>();
+		for (T entry : initial.keySet()) {
+			if (initial.get(entry) == 0) {
+				toErase.add(entry);
+			}
+		}
+		
+		for (T entry : toErase) {
+			initial.remove(entry);
+		}
+		
 		this.tokenization = initial;
 		this.fair = fair;
 		this.mutex = new Semaphore(1, fair);
@@ -29,7 +41,8 @@ public class PetriNet<T> {
 			if (allowedTransition(t, currentState)) {
 				Map<T, Integer> tokenizationCopy = new HashMap<T, Integer>(currentState);
 				getNextState(t, tokenizationCopy);
-				if (possibleTokenization.contains(tokenizationCopy)) {
+				
+				if (!possibleTokenization.contains(tokenizationCopy)) {
 					possibleTokenization.add(tokenizationCopy);
 					generateReachable(transitions, possibleTokenization, currentState);
 				}
@@ -47,8 +60,9 @@ public class PetriNet<T> {
 		} catch (InterruptedException e) {
 			return possibleTokenization;
 		}
+				
 		possibleTokenization.add(tokenizationCopy);
-		generateReachable(transitions, possibleTokenization, tokenization);
+		generateReachable(transitions, possibleTokenization, tokenizationCopy);
 		return possibleTokenization;
 	}
 	
@@ -75,56 +89,40 @@ public class PetriNet<T> {
 		}
 	}
 	
-	private IncompatibleTransition createException(T t, String type) {
-		String s = t.toString();
-		if (s.isEmpty()) {
-			s = type;
-		}
-		return new IncompatibleTransition(s);
-	}
-	
 	//Zakładamy że przejście jest dozwolone
 	private void getNextState(Transition<T> trans, Map<T, Integer> state) {
 		for (Map.Entry<T, Integer> entry : trans.getInput().entrySet()) {
 			state.replace(entry.getKey(), state.get(entry.getKey()) - entry.getValue());
+			state.remove(entry.getKey(), 0);
 		}
 		
 		for (T entry : trans.getReset()) {
-			state.replace(entry, 0);
+			if (state.containsKey(entry)) {
+				state.remove(entry);
+			} 
 		}
 		
 		for (Map.Entry<T, Integer> entry : trans.getOutput().entrySet()) {
-			state.replace(entry.getKey(), state.get(entry.getKey()) + entry.getValue());
+			if (state.containsKey(entry.getKey())) {
+				state.replace(entry.getKey(), state.get(entry.getKey()) + entry.getValue());
+			} else {
+				if (entry.getValue() > 0) {
+					state.put(entry.getKey(), entry.getValue());
+				}
+			}
 		}
 	}
 	
 	private boolean allowedTransition(Transition<T> trans, Map<T, Integer> currentTokenization) {//} throws IncompatibleTransition {
 		for (Map.Entry<T, Integer> entry : trans.getInput().entrySet()) {
-			if (currentTokenization.containsKey(entry.getKey())) {
-				// throw createException(entry.getKey(), "input");
-			}
-			if (currentTokenization.get(entry.getKey()) < entry.getValue()) {
+			if (currentTokenization.getOrDefault(entry.getKey(), 0) < entry.getValue()) {
 				return false;
 			}
 		}
 		
-		for (Map.Entry<T, Integer> entry : trans.getOutput().entrySet()) {
-			if (currentTokenization.containsKey(entry.getKey())) {
-				// throw createException(entry.getKey(), "output");
-			}
-		}
-		
-		for (T t : trans.getReset()) {
-			if (currentTokenization.containsKey(t)) {
-				// throw createException(t, "reset");
-			}
-		}
 		
 		for (T t : trans.getInhibitor()) {
-			if (currentTokenization.containsKey(t)) {
-				// throw createException(t, "inhibitor");
-			}
-			if (currentTokenization.get(t) > 0) {
+			if (currentTokenization.getOrDefault(t, 0) > 0) {
 				return false;
 			}
 		}

@@ -62,7 +62,7 @@ public class Validate {
             if (fired != transition) {
                 error(2);
             }
-
+            
             Set<Map<Place, Integer>> after = net.reachable(Collections.emptySet());
 
             if (!after.equals(Collections.singleton(end))) {
