@@ -1,2 +1,4 @@
 *.class
 java/tests/
+*.tar.gz
+java/Petri/kh406160
