@@ -20,11 +20,11 @@ public class Main {
 	
 	private static class Counter implements Runnable {
     private Collection<Transition<Place>> transitions;
-    private PetriNet net;
+    private PetriNet<Place> net;
     private int idx;
     private int numOfTransitions;
 
-    public Counter(Collection<Transition<Place>> transitions, PetriNet net, int idx) {
+    public Counter(Collection<Transition<Place>> transitions, PetriNet<Place> net, int idx) {
       this.transitions = transitions;
       this.net = net;
       this.idx = idx;

@@ -22,10 +22,10 @@ public class Main {
         private String name;
         private Collection<Transition<Place>> critical;
         private Collection<Transition<Place>> memory;
-        private PetriNet net;
+        private PetriNet<Place> net;
         private int numOfPrints;
     
-        public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet net) {
+        public Writer(String name, Transition<Place> critical, Transition<Place> memory, PetriNet<Place> net) {
             this.name = name;
             this.critical = Collections.singleton(critical);
             this.memory = Collections.singleton(memory);
