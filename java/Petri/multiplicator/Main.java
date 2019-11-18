@@ -128,7 +128,7 @@ public class Main {
 				System.err.println("Niektóre przejścia wciąż są dozwolone");
 			} else {
 				for (Map<Place, Integer> tokenization : possibleTokenization) {
-					int result = tokenization.get(Place.Result);
+					int result = tokenization.getOrDefault(Place.Result, 0);
 					System.out.println(result);
 				}
 			}
