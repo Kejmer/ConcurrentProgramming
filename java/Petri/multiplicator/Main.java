@@ -110,7 +110,6 @@ public class Main {
 		inhibitor.clear();
 		
 		//Petri net is finished
-		System.out.println("ZACZYNAMY MNOŻONKO");
 		try {
 			ArrayList<Thread> workers = new ArrayList<>();
 			for (int i = 0; i < 4; i++) {

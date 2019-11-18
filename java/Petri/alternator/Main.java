@@ -38,8 +38,8 @@ public class Main {
                 while (true) {
                     net.fire(critical);
                     numOfPrints++;
-                    System.out.println(name);
-                    System.out.println('.');
+                    System.out.print(name);
+                    System.out.print('.');
                     net.fire(memory);
                 }
             } catch (InterruptedException e) {
@@ -154,6 +154,9 @@ public class Main {
         aThread.interrupt();
         bThread.interrupt();
         cThread.interrupt();
+        
+        Thread.sleep(100);
+        System.out.println();
         System.out.println("ROZMIAR TOKENIZACJI == " + possibleTokenization.size());
         
         boolean isSafe = true;
