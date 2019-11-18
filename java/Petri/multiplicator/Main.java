@@ -121,10 +121,6 @@ public class Main {
 			
 			net.fire(Collections.singleton(finalTransition));
 			
-			for (Thread t : workers) {
-				t.interrupt();
-			}
-			
 			//Checking if every transition is no longer legal (except finalTransition)
 			Set<Map<Place, Integer>> possibleTokenization = net.reachable(transitions); 
 			
@@ -136,6 +132,11 @@ public class Main {
 					System.out.println(result);
 				}
 			}
+			
+			for (Thread t : workers) {
+				t.interrupt();
+			}
+			
 		} catch (InterruptedException e) {
 			System.out.println("Wątek main został przerwany!");
 		}

@@ -43,7 +43,7 @@ public class Main {
                     net.fire(memory);
                 }
             } catch (InterruptedException e) {
-                System.out.println(name + " wykonał się " + numOfPrints + " razy!");
+                // System.out.println(name + " wykonał się " + numOfPrints + " razy!");
             }
         }
     }
@@ -127,18 +127,32 @@ public class Main {
     
     //Petri net is finished
     
-    Set<Map<Place, Integer>> possibleTokenization = net.reachable(transitions);
-    
-    Thread aThread = new Thread (new Writer("A", criticalA, memoryA, net));
-    Thread bThread = new Thread (new Writer("B", criticalB, memoryB, net));
-    Thread cThread = new Thread (new Writer("C", criticalC, memoryC, net));
-    
     ArrayList<Place> criticalSection = new ArrayList<>();
     criticalSection.add(Place.CriticalA);
     criticalSection.add(Place.CriticalB);
     criticalSection.add(Place.CriticalC);
     
+    Set<Map<Place, Integer>> possibleTokenization = net.reachable(transitions);
     
+    System.out.println("Liczba osiągalnych znakowań: " + possibleTokenization.size());
+    
+    boolean isSafe = true;
+    
+    for (Map<Place, Integer> tokenization : possibleTokenization) {
+        int criticalSum = 0;
+        for (Place p : criticalSection) {
+            criticalSum += tokenization.getOrDefault(p, 0);
+        } 
+        if (criticalSum > 1) {
+            isSafe = false;
+        }
+    }
+    
+    System.out.println("PROGRAM JEST " + (isSafe ? "BEZPIECZNY" : "NIEZABEZPIECZONY"));        
+    
+    Thread aThread = new Thread (new Writer("A", criticalA, memoryA, net));
+    Thread bThread = new Thread (new Writer("B", criticalB, memoryB, net));
+    Thread cThread = new Thread (new Writer("C", criticalC, memoryC, net));
     
     aThread.setName("Wątek A");
     bThread.setName("Wątek B");
@@ -157,21 +171,6 @@ public class Main {
         
         Thread.sleep(100);
         System.out.println();
-        System.out.println("ROZMIAR TOKENIZACJI == " + possibleTokenization.size());
-        
-        boolean isSafe = true;
-        
-        for (Map<Place, Integer> tokenization : possibleTokenization) {
-            int criticalSum = 0;
-            for (Place p : criticalSection) {
-                criticalSum += tokenization.getOrDefault(p, 0);
-            } 
-            if (criticalSum > 1) {
-                isSafe = false;
-            }
-        }
-        
-        System.out.println("WĄTEK JEST " + (isSafe ? "BEZPIECZNY" : "NIEZABEZPIECZONY"));        
         
     } catch (InterruptedException e) {
         System.out.println("Przerwano wątek główny");
