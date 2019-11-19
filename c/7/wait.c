@@ -27,6 +27,7 @@ int main ()
       printf("I am a parent and fork() return value is %d\n", pid);
 
       if (wait(0) == -1) syserr("Error in wait\n");
+      printf("%s\n", "AAAAAAa");
                                               /* czeka na zakończenie procesu potomnego */
  
       return 0;

@@ -19,6 +19,6 @@ add_executable(fork fork.c)
 add_executable(wait wait.c)
 add_executable(exec exec.c)
 add_executable(tree tree.c)
-#add_executable(line line.c)
+add_executable(line line.c)
 
 install(TARGETS DESTINATION .)
