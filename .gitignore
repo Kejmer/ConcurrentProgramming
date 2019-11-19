@@ -1,4 +1,21 @@
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
+
+### Above combination will ignore all files without extension ###
+
+
+
 *.class
 java/tests/
 *.tar.gz
 java/Petri/kh406160
+*.cmake
+CMakeFiles/
+*.a
+CMakeCache.txt
