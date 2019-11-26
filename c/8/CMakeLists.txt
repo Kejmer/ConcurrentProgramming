@@ -19,5 +19,6 @@ add_executable(parent-pipe parent-pipe.c)
 add_executable(parent-dup parent-dup.c)
 add_executable(child-fifo child-fifo.c)
 add_executable(parent-fifo parent-fifo.c)
+add_executable(mypipe mypipe.c)
 
 install(TARGETS DESTINATION .)

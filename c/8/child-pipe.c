@@ -10,6 +10,8 @@ int main (int argc, char *argv[])
   int read_dsc, buf_len;
   char buf[BUF_SIZE];
   
+  printf("ILOSC ARGUMENTOW %d\n", argc);
+  
   if (argc != 2)
     fatal("Usage: %s <read_fd>\n", argv[0]);
   
