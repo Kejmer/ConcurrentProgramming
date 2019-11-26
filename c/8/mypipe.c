@@ -13,8 +13,6 @@ int main (int argc, char *argv[])
   
   for (int i = 1; i < argc; i++) {
     
-    printf("Program to %s \n", argv[0]);
-    printf("Liczba argc %d\n", argc);
     
     if (pipe(pipe_dsc) == -1) syserr("Error in pipe\n");
     
@@ -23,18 +21,14 @@ int main (int argc, char *argv[])
         syserr("Error in fork\n");
         
       case 0:
-      printf("AAA\n");
-        if (close (pipe_dsc [0]) == -1)     syserr("Error in child, close (pipe_dsc [0])\n");
-        if (close (pipe_dsc [1]) == -1)     syserr("Error in child, close (pipe_dsc [1])\n");
-        argv++;
-        argc--;
-        
-        break;      
-      default:
         if (close (0) == -1)                syserr("Error in child, close (0)\n");
         if (dup (pipe_dsc [0]) != 0)        syserr("Error in child, dup (pipe_dsc [0])\n");
         if (close (pipe_dsc [0]) == -1)     syserr("Error in child, close (pipe_dsc [0])\n");
+        if (close (pipe_dsc [1]) == -1)     syserr("Error in child, close (pipe_dsc [1])\n");
         
+        break;      
+      default:
+        if (close (pipe_dsc [0]) == -1)     syserr("Error in child, close (pipe_dsc [0])\n");
         if (i < argc - 1) { //Nadpisujemy wyjście
           if (close (1) == -1)              syserr("Error in child, close (1)\n");
           if (dup (pipe_dsc [1]) != 1)  syserr("Error in child, dup2 (pipe_dsc[1], 1)");
@@ -42,8 +36,11 @@ int main (int argc, char *argv[])
         if (close (pipe_dsc [1]) == -1)     syserr("Error in child, close (pipe_dsc [1])\n");
         
         if (argc >= 2) {
-          execvp(argv[1], argv + 1);
-          syserr("Error in execvp\n");
+          char **tab = malloc(sizeof(char*));
+          tab[0] = argv[1];
+          execvp(argv[i], tab);
+          // execl("ls", "ls", NULL);
+          syserr("Error in execl\n");
         }  
     }
   }
