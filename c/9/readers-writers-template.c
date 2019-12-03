@@ -24,34 +24,108 @@ int working = 1;
 /* Initialize a buffer */
 
 void init(struct readwrite *rw) {
+  int err;
+  
+  if ((err = pthread_mutex_init(&rw->lock, 0)) != 0)
+    syserr (err, "mutex init failed");
+  if ((err = pthread_cond_init(&rw->readers, 0)) != 0)
+    syserr (err, "cond init 1 failed");
+  if ((err = pthread_cond_init(&rw->writers, 0)) != 0)
+    syserr (err, "cond init 2 failed");
+  
+  rw->rcount = 0;
+  rw->wcount = 0;
+  rw->rwait = 0;
+  rw->wwait = 0;
+  rw->change = 0;
 }
 
 /* Destroy the buffer */
 
 void destroy(struct readwrite *rw) {
+  int err;
+  
+  if ((err = pthread_cond_destroy (&rw->readers)) != 0)
+    syserr (err, "cond destroy 1 failed");
+  if ((err = pthread_cond_destroy (&rw->writers)) != 0)
+    syserr (err, "cond destroy 2 failed");
+  if ((err = pthread_mutex_destroy (&rw->lock)) != 0)
+    syserr (err, "mutex destroy failed");
 }
 
 void *reader(void *data)
 {
-   while (working) {
+  int err; 
+  
+  while (working) {
+    
+    if ((err = pthread_mutex_lock(&library.lock)) != 0)
+      syserr (err, "lock failed");
+    library.rwait++;
+    
+    while (library.wcount)
+      if ((err = pthread_cond_wait(&library.readers, &library.lock)) != 0)
+        syserr (err, "readers cond failed");
+    
+    library.rwait--;
+    library.rcount++;
+    
+    if ((err = pthread_cond_signal(&library.readers)) != 0)
+      syserr (err, "readers signal failed");
+    
+    if ((err = pthread_mutex_unlock(&library.lock)) != 0)
+      syserr (err, "unlock failed");
+    
+    printf("reader read: %s\n", book); /* reading */
+    
+    if ((err = pthread_mutex_lock(&library.lock)) != 0)
+      syserr (err, "lock failed");
+    
+    library.rcount--;
+    
+    if (library.wwait > 0) {
+       if ((err = pthread_cond_signal(&library.writers)) != 0)
+        syserr (err, "writers signal failed");
+    }
+    
+    if ((err = pthread_mutex_unlock(&library.lock)) != 0)
+      syserr (err, "unlock failed");
 
-     printf("reader read: %s\n", book); /* reading */
-
-   }
-   return 0;
+  }
+  return 0;
 }
 
 void *writer(void *data)
 {  
-   int l;
+   int err, l;
    while (working) {
-
+    
+    if ((err = pthread_mutex_lock(&library.lock)) != 0)
+      syserr (err, "lock failed");
+    library.wwait++;
+    
+    while (library.rcount + library.wcount > 0) 
+      if ((err = pthread_cond_wait(&library.writers, &library.lock)) != 0)
+        syserr (err, "writers cond failed");
+      
+    library.wwait--;
+    library.wcount++;
+      
      l = rand()%10;
      snprintf(book, BSIZE, "6 times a number %d %d %d %d %d %d", l, l, l, l, l, l);
+
+    library.wcount--;
+    if ((err = pthread_cond_signal(&library.writers)) != 0)
+      syserr (err, "writers signal failed");
+
+    if ((err = pthread_mutex_unlock(&library.lock)) != 0)
+      syserr (err, "unlock failed");
 
    }
    return 0;
 }
+
+
 
 
 int main() {
@@ -79,6 +153,7 @@ int main() {
   
   sleep(NAP);
   working = 0;
+  printf("WAKE UP\n");
 
   for (i = 0; i < READERS + WRITERS; i++) {
     if ((err = pthread_join(th[i], &retval)) != 0)
