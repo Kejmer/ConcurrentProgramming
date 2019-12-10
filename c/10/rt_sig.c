@@ -80,6 +80,6 @@ int main(){
   if (sigprocmask(SIG_UNBLOCK, &block_mask, 0) == -1)
     syserr("sigprocmask unblock");
   
-  
+  sleep(9);
   return 0;
 }

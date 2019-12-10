@@ -19,7 +19,7 @@ add_executable(more_info more_info.c)
 add_executable(rt_sig rt_sig.c)
 add_executable(signal_mask signal_mask.c)
 add_executable(signals_in_terminal signals_in_terminal.c)
-#add_executable(bariera bariera.c)
+add_executable(bariera bariera.c)
 
 
 install(TARGETS DESTINATION .)
