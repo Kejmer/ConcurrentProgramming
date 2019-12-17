@@ -143,9 +143,7 @@ int main(){
   // mapped_mem = (struct storage *) mapped_mem_temp;
   mapped_mem->produced_gifts = 0;
   mapped_mem->received_gifts = 0;
-  printf("AAAAAa\n");
   if (sem_init(&mapped_mem->mutex, 1, 1)) syserr("sem init");
-  printf("AAAAAa\n");
   if (sem_init(&mapped_mem->warehouse_in, 1, MAX_GIFTS)) syserr("sem init");
   if (sem_init(&mapped_mem->warehouse_out, 1, 0)) syserr("sem init");  
 
