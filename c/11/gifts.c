@@ -134,13 +134,14 @@ int main(){
   flags = MAP_SHARED | MAP_ANONYMOUS; 
   
     
-  mapped_mem = (struct storage *) mmap(NULL, sizeof(struct storage), prot, flags,
+  void *mapped_mem_temp =  mmap(NULL, sizeof(struct storage), prot, flags,
                   fd_memory, 0);
   
-  // if(mapped_mem_temp == MAP_FAILED)
-  //   syserr("mmap");
+  if(mapped_mem_temp == MAP_FAILED)
+    syserr("mmap");
   
-  // mapped_mem = (struct storage *) mapped_mem_temp;
+  mapped_mem = (struct storage *) mapped_mem_temp;
+  
   mapped_mem->produced_gifts = 0;
   mapped_mem->received_gifts = 0;
   if (sem_init(&mapped_mem->mutex, 1, 1)) syserr("sem init");
