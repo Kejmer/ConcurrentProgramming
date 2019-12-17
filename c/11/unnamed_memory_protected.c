@@ -58,6 +58,9 @@ int main(){
 
   print_table(mapped_mem, BUFF_SIZE);
   
+  sem_t *sss;
+  sem_init(sss, 1, 0);
+  
   if(sem_init(sem, 1, 0))
     syserr("sem_init");
   

@@ -34,7 +34,7 @@ target_link_libraries(unnamed_memory_protected rt pthread)
 
 #add_executable(myCat myCat.c)
 
-#add_executable(gifts gifts.c)
-#target_link_libraries(gifts rt pthread)
+add_executable(gifts gifts.c)
+target_link_libraries(gifts rt pthread)
 
 install(TARGETS DESTINATION .)
