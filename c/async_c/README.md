@@ -1,4 +1,5 @@
-Wprowadzenie
+
+#Wprowadzenie
 
 Pula wątków to mechanizm pozwalający na uzyskanie współbieżnego wykonywanie wielu zadań w ramach jednego programu. W skład puli wchodzi pewna liczba wątków roboczych (ang. worker threads), czekających na pojawienie się pracy do wykonania.
 
@@ -15,7 +16,7 @@ Polecenie
 
     Zadbaj, aby kod był napisany w sposób klarowny i rzetelny zgodnie z poniższymi wytycznymi. (2 pkt).
 
-Szczegółowy opis puli wątków
+#Szczegółowy opis puli wątków
 
 Pulę wątków należy zaimplementować jako realizację interfejsu przedstawionego w pliku "threadpool.h". Zamieszczone tam są m.in. następujące deklaracje:
 
@@ -44,7 +45,7 @@ Funkcja function powinna zostać obliczona przez wątek z puli pool; wywołanie 
 Zadania zlecone do wykonania przez defer powinny móc wykonywać się współbieżnie i na tyle niezależnie od siebie, na ile to możliwe. Można ograniczyć liczbę współbieżnie wykonywanych zadań do rozmiaru puli. Pula w czasie swojego działania nie powinna powoływać więcej wątków niż określono parametrem pool_size. Utworzone wątki są utrzymywane aż do wywołania thread_pool_destroy.
 
 Zastanów się nad tym, jak zrealizować powyższą bibliotekę tak, aby wykonywała się możliwie sprawnie na współczesnych komputerach. Postaraj się zrealizować taką implementację.
-Szczegółowy opis mechanizmu obliczeń future
+#Szczegółowy opis mechanizmu obliczeń future
 
 Przy pomocy puli wątków i operacji defer należy zaimplenentować asynchroniczne obliczenia future jako realizację interfejsu przedstawionego w pliku "future.h". Zamieszczone są tam m.in. następujące deklaracje:
 
@@ -81,7 +82,7 @@ Wołający może teraz:
 Programy, w których aktywnie działa jakaś pula wątków, powinny mieć automatycznie ustawioną obsługę sygnałów. Ta obsługa powinna zapewniać, że program po otrzymaniu sygnału (SIGINT) zablokuje możliwość dodawania nowych zadań do działających pul, dokończy wszystkie obliczenia zlecone dotąd działającym pulom, a następnie zniszczy działające pule.
 
 Dla ułatwienia implementacji można założyć, że zaimplementowana biblioteka będzie testowana w taki sposób, iż wątki nie będą ginęły w testach.
-Opis programu macierz
+#Opis programu macierz
 
 Program macierz ma ze standardowego wejścia wczytywać dwie liczby k oraz n, każda w osobnym wierszu. Liczby te oznaczają odpowiednio liczbę wierszy oraz kolumn macierzy. Następnie program ma wczytać k*n linijek z danymi, z których każda zawiera dwie, oddzielone spacją liczby: v, t. Liczba v umieszczona w linijce i (numerację linijek zaczynamy od 0) określa wartość macierzy z wiersza floor(i/n) (numerację kolumn i wierszy zaczynamy od 0) oraz kolumny i mod n. Liczba t to liczba milisekund, jakie są potrzebne do obliczenia wartości v. Oto przykładowe poprawne dane wejściowe:
 
@@ -108,7 +109,7 @@ powinno spowodować pojawienie się na wyjściu
 14
 33
 
-Opis programu silnia
+#Opis programu silnia
 
 Program silnia powinien wczytywać ze standardowego wejścia pojedynczą liczbę n, a następnie obliczać za pomocą puli 3 wątków liczbę n!. Po obliczeniu tej liczby wynik powinien zostać wypisany na standardowe wyjście. Program powinien wyliczać silnię, wykorzystując funkcję map i przekazując jej w future_value częściowe iloczyny. Dla przykładu wywołanie:
 
@@ -118,7 +119,7 @@ powinno spowodować pojawienie się na wyjściu
 
 120
 
-Wymagania techniczne
+#Wymagania techniczne
 
 Do synchronizacji można korzystać tylko z mechanizmów biblioteki pthreads. Można korzystać z plików nagłówkowych:
 
@@ -141,5 +142,3 @@ make
 Powinien skompilować bibliotekę do pliku build/libasyncc.a, kompilator nie powinien wypisywać żadnych ostrzeżeń. Następnie można przetestować swoje rozwiązanie:
 
 make test
-
-W czasie oceniania zawartość katalogu test zostanie podmieniona.
