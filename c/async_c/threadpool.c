@@ -2,7 +2,7 @@
 
 // INFORMACJA POMOCNICZA O STRUKTURACH
 
-enum status {Working, Free};
+// enum status {Working, Free};
 
 // typedef struct runnable {
 //   void (*function)(void *, size_t);
@@ -69,8 +69,30 @@ void thread_pool_destroy(struct thread_pool *pool)
 
 int defer(struct thread_pool *pool, runnable_t runnable)
 {
+  //Sprawdzamy czy jakikolwiek wątek jest wolny
   if (sem_wait(pool->mutex)) {
     fprintf(stderr, "Error in defer – pool->mutex wait\n");
+    return -1;
+  }
+  //Szukamy pierwszego wolnego wątku
+  int thread_no = -1;
+  for (int i = 0; i < pool->num_threads; i++) {
+    if (pool->working[i] == Free) {
+      thread_no = i;
+      pool->working[i] = Working;
+      break;
+    }
+  }
+
+  if (thread_no == -1) {
+    fprintf(stderr, "Error in defer – no free threads\n");
+    return -1;
+  }
+
+  if (pthread_create(&pool->thread[thread_no], &pool->attr, runnable.function, runnable.arg)) {
+    fprintf(stderr, "Error in defer – pthread_create\n");
+    pool->working[i] = Free;
+    sem_post(pool->mutex);
     return -1;
   }
 
