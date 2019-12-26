@@ -103,9 +103,10 @@ static void make_async(thread_pool_t *pool, int thread_num, runnable_t *runnable
   sem_post(&pool->mutex);
 }
 
-static void unwrap(async_arg_t arg) {
+static void unwrap(void *arg_temp) {
+  async_arg_t *arg = ((*async_arg_t) arg_temp);
+  free(arg_temp);
   make_async(arg->pool, arg->thread_num, arg->runnable);
-  free(arg);
 }
 
 static int delay(thread_pool_t *pool, int thread_num, runnable_t *runnable)
