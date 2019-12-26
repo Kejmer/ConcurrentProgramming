@@ -94,6 +94,7 @@ void thread_pool_destroy(thread_pool_t *pool)
 static void make_async(thread_pool_t *pool, int thread_num, runnable_t *runnable)
 {
   //Tutaj odpalam funkcję
+  (* runnable->funkction)(runnable->arg, runnable->argsz);
 
   if (sem_wait(&pool->mutex)) {
     fprintf(stderr, "Error in async funkction – sem_wait\n");
