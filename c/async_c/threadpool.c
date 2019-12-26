@@ -40,7 +40,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
   if (sem_init(&pool->mutex_all) != 0) {
     free(pool->thread);
     free(pool->working);
-    // pthread_attr_destoy(pool->attr);
+    pthread_attr_destoy(pool->attr);
     return -1;
   }
   return 0;
@@ -48,7 +48,10 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
 
 void thread_pool_destroy(struct thread_pool *pool)
 {
-
+  free(pool->thread);
+  free(pool->working);
+  pthread_attr_destoy(pool->attr);
+  sem_destroy(&pool->mutex_all);
 }
 
 int defer(struct thread_pool *pool, runnable_t runnable)
