@@ -7,16 +7,19 @@
 
 enum status {Working, Free};
 
-typedef struct runnable {
+typedef struct runnable
+{
   void (*function)(void *, size_t);
   void *arg;
   size_t argsz;
 } runnable_t;
 
-typedef struct thread_pool {
+typedef struct thread_pool
+{
   pthread_t *thread;        //Tablica wątków
   pthread_attr_t *attr;
-  sem_t mutex;              //Semafor dysponuje pool_size zezwoleniami
+  sem_t mutex;
+  sem_t mutex_all;          //Semafor dysponuje pool_size zezwoleniami
   status *working;          //Stan poszczególnych wątków
   size_t num_threads;       //Informacja o tym ile wątków jest zarezerwowanych w pamięci
 } thread_pool_t;
