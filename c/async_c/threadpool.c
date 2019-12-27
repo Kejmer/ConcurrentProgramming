@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include "threadpool.h"
 
 // INFORMACJA POMOCNICZA O STRUKTURACH
@@ -12,7 +14,7 @@
 
 // typedef struct thread_pool {
 //   pthread_t *thread;        //Tablica wątków
-//   pthread_attr_t *attr;
+//   pthread_attr_t attr;
 //   sem_t mutex;
 //   sem_t mutex_all;          //Semafor dysponuje pool_size zezwoleniami
 //   status *working;          //Stan poszczególnych wątków
@@ -21,8 +23,8 @@
 
 typedef struct async_arg
 {
-  thread_pool *pool;
-  int num_threads;
+  thread_pool_t *pool;
+  int thread_num;
   runnable_t runnable;
 } async_arg_t;
 
@@ -36,7 +38,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     return -1;
   }
 
-  pool->working = malloc(num_threads * sizeof(status));
+  pool->working = malloc(num_threads * sizeof(enum status));
   if (pool->working == NULL) {
     fprintf(stderr, "Error in thread_pool_init – malloc\n");
     free(pool->thread);
@@ -54,7 +56,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     fprintf(stderr, "Error in thread_pool_init – sem_init\n");
     free(pool->thread);
     free(pool->working);
-    if (pthread_attr_destoy(pool->attr)) {
+    if (pthread_attr_destroy(&pool->attr)) {
       fprintf(stderr, "Error in pthread_attr_destoy\n");
     }
     return -1;
@@ -64,13 +66,17 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     fprintf(stderr, "Error in thread_pool_init – sem_init\n");
     free(pool->thread);
     free(pool->working);
-    if (pthread_attr_destoy(pool->attr)) {
+    if (pthread_attr_destroy(&pool->attr)) {
       fprintf(stderr, "Error in pthread_attr_destoy\n");
     }
     if (sem_destroy(&pool->mutex_all)) {
       fprintf(stderr, "Error in sem_destroy\n");
     }
     return -1;
+  }
+
+  for (unsigned i = 0; i < num_threads; i++) {
+    pool->working[i] = Free;
   }
 
   return 0;
@@ -80,7 +86,7 @@ void thread_pool_destroy(thread_pool_t *pool)
 {
   free(pool->thread);
   free(pool->working);
-  if (pthread_attr_destoy(&pool->attr)) {
+  if (pthread_attr_destroy(&pool->attr)) {
     fprintf(stderr, "Error in thread_pool_destroy – pthread_attr_destoy\n");
   }
   if (sem_destroy(&pool->mutex_all)) {
@@ -91,10 +97,10 @@ void thread_pool_destroy(thread_pool_t *pool)
   }
 }
 
-static void make_async(thread_pool_t *pool, int thread_num, runnable_t *runnable)
+static void make_async(thread_pool_t *pool, int thread_num, runnable_t runnable)
 {
   //Tutaj odpalam funkcję
-  (* runnable->funkction)(runnable->arg, runnable->argsz);
+  (* runnable.function)(runnable.arg, runnable.argsz);
 
   if (sem_wait(&pool->mutex)) {
     fprintf(stderr, "Error in async funkction – sem_wait\n");
@@ -104,15 +110,16 @@ static void make_async(thread_pool_t *pool, int thread_num, runnable_t *runnable
   sem_post(&pool->mutex);
 }
 
-static void unwrap(void *arg_temp) {
-  async_arg_t *arg = ((*async_arg_t) arg_temp);
+static void *unwrap(void *arg_temp) {
+  async_arg_t *arg = ((async_arg_t *) arg_temp);
   free(arg_temp);
   make_async(arg->pool, arg->thread_num, arg->runnable);
+  return 0;
 }
 
-static int delay(thread_pool_t *pool, int thread_num, runnable_t *runnable)
+static int delay(thread_pool_t *pool, int thread_num, runnable_t runnable)
 {
-  async_arg_t arg = malloc(sizeof(async_arg_t));
+  async_arg_t *arg = malloc(sizeof(async_arg_t));
   if (arg == NULL) {
     fprintf(stderr, "Error in defer – malloc\n"); //bo jest to funkcja wywoływane przez defer
     return -1;
@@ -120,7 +127,7 @@ static int delay(thread_pool_t *pool, int thread_num, runnable_t *runnable)
   arg->pool = pool;
   arg->thread_num = thread_num;
   arg->runnable = runnable;
-  if (pthread_create(pool->threads[thread_num], &pool->attr, unwrap, arg)) {
+  if (pthread_create(&pool->thread[thread_num], &pool->attr, &unwrap, arg)) {
     fprintf(stderr, "Error in defer – pthread_create\n");
     free(arg);
     return -1;
@@ -141,7 +148,7 @@ int defer(thread_pool_t *pool, runnable_t runnable)
     return -1;
   }
   int thread_num = -1;
-  for (int i = 0; i < pool->num_threads; i++) {
+  for (unsigned i = 0; i < pool->num_threads; i++) {
     if (pool->working[i] == Free) {
       thread_num = i;
       pool->working[i] = Working;
@@ -152,13 +159,13 @@ int defer(thread_pool_t *pool, runnable_t runnable)
 
   if (thread_num == -1) {
     fprintf(stderr, "Error in defer – no free threads\n");
-    sem_post(&pool->mutex_all)
+    sem_post(&pool->mutex_all);
     return -1;
   }
 
-  if (delay(pool, thread_num, &runnable)) {
+  if (delay(pool, thread_num, runnable)) {
     fprintf(stderr, "Error in defer – pthread_create\n");
-    pool->working[i] = Free;
+    pool->working[thread_num] = Free;
     sem_post(&pool->mutex_all);
     return -1;
   }
