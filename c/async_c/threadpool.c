@@ -75,6 +75,22 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     return -1;
   }
 
+  //Zapewnienie że pamięc zarezerwowana na wątek zostanie zwolniona po zakończeniu
+  if (pthread_attr_setdetachstate(&pool->attr, PTHREAD_CREATE_DETACHED)) {
+    fprintf(stderr, "Error in thread_pool_init – sem_init\n");
+    free(pool->thread);
+    free(pool->working);
+    if (pthread_attr_destroy(&pool->attr)) {
+      fprintf(stderr, "Error in pthread_attr_destoy\n");
+    }
+    if (sem_destroy(&pool->mutex_all)) {
+      fprintf(stderr, "Error in sem_destroy\n");
+    }
+    if (sem_destroy(&pool->mutex)) {
+      fprintf(stderr, "Error in sem_destroy\n");
+    }
+  }
+
   for (unsigned i = 0; i < num_threads; i++) {
     pool->working[i] = Free;
   }
@@ -111,9 +127,9 @@ static void make_async(thread_pool_t *pool, int thread_num, runnable_t runnable)
 }
 
 static void *unwrap(void *arg_temp) {
-  async_arg_t *arg = ((async_arg_t *) arg_temp);
+  async_arg_t arg = *((async_arg_t *) arg_temp);
   free(arg_temp);
-  make_async(arg->pool, arg->thread_num, arg->runnable);
+  make_async(arg.pool, arg.thread_num, arg.runnable);
   return 0;
 }
 
