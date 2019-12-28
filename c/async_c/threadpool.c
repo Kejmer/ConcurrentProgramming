@@ -2,25 +2,6 @@
 #include <stdio.h>
 #include "threadpool.h"
 
-// INFORMACJA POMOCNICZA O STRUKTURACH
-
-// enum status {Working, Free};
-
-// typedef struct runnable {
-//   void (*function)(void *, size_t);
-//   void *arg;
-//   size_t argsz;
-// } runnable_t;
-
-// typedef struct thread_pool {
-//   pthread_t *thread;        //Tablica wątków
-//   pthread_attr_t attr;
-//   sem_t mutex;
-//   sem_t mutex_all;          //Semafor dysponuje pool_size zezwoleniami
-//   status *working;          //Stan poszczególnych wątków
-//   size_t num_threads;       //Informacja o tym ile wątków jest zarezerwowanych w pamięci
-// } thread_pool_t;
-
 typedef struct async_arg
 {
   thread_pool_t *pool;
@@ -115,8 +96,8 @@ void thread_pool_destroy(thread_pool_t *pool)
 
 static void make_async(thread_pool_t *pool, int thread_num, runnable_t runnable)
 {
-  //Tutaj odpalam funkcję
   (* runnable.function)(runnable.arg, runnable.argsz);
+  free(runnable.arg);
 
   if (sem_wait(&pool->mutex)) {
     fprintf(stderr, "Error in async funkction – sem_wait\n");
@@ -153,6 +134,11 @@ static int delay(thread_pool_t *pool, int thread_num, runnable_t runnable)
 
 int defer(thread_pool_t *pool, runnable_t runnable)
 {
+  //Tworzymy kopię runnable
+  runnable_t runnable_copy = runnable;
+  runnable_copy.arg = malloc(runnable.argsz);
+  *runnable_copy.arg = *runnable.arg;
+
   //Sprawdzamy czy jakikolwiek wątek jest wolny
   if (sem_wait(&pool->mutex_all)) {
     fprintf(stderr, "Error in defer – sem_wait\n");
@@ -179,7 +165,7 @@ int defer(thread_pool_t *pool, runnable_t runnable)
     return -1;
   }
 
-  if (delay(pool, thread_num, runnable)) {
+  if (delay(pool, thread_num, runnable_copy)) {
     fprintf(stderr, "Error in defer – pthread_create\n");
     pool->working[thread_num] = Free;
     sem_post(&pool->mutex_all);
