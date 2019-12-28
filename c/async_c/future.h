@@ -4,8 +4,6 @@
 #include <semaphore.h>
 #include "threadpool.h"
 
-//NOTATKA DLA SIEBIE
-// Kopiując callable trzeba skopiować też to co siedzi w argumencie poprzez malloc odpowiedni wielkości argsz.
 
 typedef struct callable {
   void *(*function)(void *, size_t, size_t *);
@@ -16,6 +14,7 @@ typedef struct callable {
 typedef struct future {
   void *result;
   sem_t lock;
+  size_t retsz;
 } future_t;
 
 int async(thread_pool_t *pool, future_t *future, callable_t callable);
@@ -24,5 +23,9 @@ int map(thread_pool_t *pool, future_t *future, future_t *from,
         void *(*function)(void *, size_t, size_t *));
 
 void *await(future_t *future);
+
+//Zakładamy że await można wywołać tylko raz!
+//Wywołanie await po wywołaniu map traktowane jest jako bład.
+//Map zwalnia pamięc wyniku from->result
 
 #endif

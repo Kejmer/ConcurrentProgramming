@@ -16,21 +16,21 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
   pool->thread = malloc(num_threads * sizeof(pthread_t));
   if (pool->thread == NULL) {
     fprintf(stderr, "Error in thread_pool_init – malloc\n");
-    return -1;
+    return EXIT_FAILURE;
   }
 
   pool->working = malloc(num_threads * sizeof(enum status));
   if (pool->working == NULL) {
     fprintf(stderr, "Error in thread_pool_init – malloc\n");
     free(pool->thread);
-    return -1;
+    return EXIT_FAILURE;
   }
 
   if (pthread_attr_init(&pool->attr)) {
     fprintf(stderr, "Error in thread_pool_init – pthread_attr_init\n");
     free(pool->thread);
     free(pool->working);
-    return -1;
+    return EXIT_FAILURE;
   }
 
   if (sem_init(&pool->mutex_all, 0, num_threads)) {
@@ -40,7 +40,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     if (pthread_attr_destroy(&pool->attr)) {
       fprintf(stderr, "Error in pthread_attr_destoy\n");
     }
-    return -1;
+    return EXIT_FAILURE;
   }
 
   if (sem_init(&pool->mutex, 0, 1)) {
@@ -53,7 +53,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     if (sem_destroy(&pool->mutex_all)) {
       fprintf(stderr, "Error in sem_destroy\n");
     }
-    return -1;
+    return EXIT_FAILURE;
   }
 
   //Zapewnienie że pamięc zarezerwowana na wątek zostanie zwolniona po zakończeniu
@@ -76,7 +76,7 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     pool->working[i] = Free;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 void thread_pool_destroy(thread_pool_t *pool)
@@ -97,10 +97,11 @@ void thread_pool_destroy(thread_pool_t *pool)
 static void make_async(thread_pool_t *pool, int thread_num, runnable_t runnable)
 {
   (* runnable.function)(runnable.arg, runnable.argsz);
-  free(runnable.arg);
+  // free(runnable.arg);
 
   if (sem_wait(&pool->mutex)) {
     fprintf(stderr, "Error in async funkction – sem_wait\n");
+    exit(EXIT_FAILURE);
   }
   pool->working[thread_num] = Free;
   sem_post(&pool->mutex_all);
@@ -111,7 +112,7 @@ static void *unwrap(void *arg_temp) {
   async_arg_t arg = *((async_arg_t *) arg_temp);
   free(arg_temp);
   make_async(arg.pool, arg.thread_num, arg.runnable);
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 static int delay(thread_pool_t *pool, int thread_num, runnable_t runnable)
@@ -119,7 +120,7 @@ static int delay(thread_pool_t *pool, int thread_num, runnable_t runnable)
   async_arg_t *arg = malloc(sizeof(async_arg_t));
   if (arg == NULL) {
     fprintf(stderr, "Error in defer – malloc\n"); //bo jest to funkcja wywoływane przez defer
-    return -1;
+    return EXIT_FAILURE;
   }
   arg->pool = pool;
   arg->thread_num = thread_num;
@@ -127,27 +128,31 @@ static int delay(thread_pool_t *pool, int thread_num, runnable_t runnable)
   if (pthread_create(&pool->thread[thread_num], &pool->attr, &unwrap, arg)) {
     fprintf(stderr, "Error in defer – pthread_create\n");
     free(arg);
-    return -1;
+    // free(runnable.arg);
+    return EXIT_FAILURE;
   }
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 int defer(thread_pool_t *pool, runnable_t runnable)
 {
   //Tworzymy kopię runnable
-  runnable_t runnable_copy = runnable;
-  runnable_copy.arg = malloc(runnable.argsz);
-  *runnable_copy.arg = *runnable.arg;
+  // runnable_t runnable_copy = runnable;
+  // runnable_copy.arg = malloc(runnable.argsz);
+  // if (runnable_copy.arg == NULL) {
+  //   return EXIT_FAILURE;
+  // }
+  // memcpy(runnable_copy.arg, runnable.arg, runnable.argsz);
 
   //Sprawdzamy czy jakikolwiek wątek jest wolny
   if (sem_wait(&pool->mutex_all)) {
     fprintf(stderr, "Error in defer – sem_wait\n");
-    return -1;
+    return EXIT_FAILURE;
   }
   //Szukamy pierwszego wolnego wątku
   if (sem_wait(&pool->mutex)) {
     fprintf(stderr, "Error in defer – sem_wait\n");
-    return -1;
+    return EXIT_FAILURE;
   }
   int thread_num = -1;
   for (unsigned i = 0; i < pool->num_threads; i++) {
@@ -162,14 +167,14 @@ int defer(thread_pool_t *pool, runnable_t runnable)
   if (thread_num == -1) {
     fprintf(stderr, "Error in defer – no free threads\n");
     sem_post(&pool->mutex_all);
-    return -1;
+    return EXIT_FAILURE;
   }
 
-  if (delay(pool, thread_num, runnable_copy)) {
+  if (delay(pool, thread_num, runnable)) {
     fprintf(stderr, "Error in defer – pthread_create\n");
     pool->working[thread_num] = Free;
     sem_post(&pool->mutex_all);
-    return -1;
+    return EXIT_FAILURE;
   }
-  return 0;
+  return EXIT_SUCCESS;
 }
