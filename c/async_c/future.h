@@ -1,7 +1,11 @@
 #ifndef FUTURE_H
 #define FUTURE_H
 
+#include <semaphore.h>
 #include "threadpool.h"
+
+//NOTATKA DLA SIEBIE
+// Kopiując callable trzeba skopiować też to co siedzi w argumencie poprzez malloc odpowiedni wielkości argsz.
 
 typedef struct callable {
   void *(*function)(void *, size_t, size_t *);
@@ -10,7 +14,8 @@ typedef struct callable {
 } callable_t;
 
 typedef struct future {
-
+  void *result;
+  sem_t lock;
 } future_t;
 
 int async(thread_pool_t *pool, future_t *future, callable_t callable);
