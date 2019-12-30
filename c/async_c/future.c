@@ -1,18 +1,6 @@
 #include "future.h"
 #include <stdlib.h>
 
-// typedef struct callable {
-//   void *(*function)(void *, size_t, size_t *);
-//   void *arg;
-//   size_t argsz;
-// } callable_t;
-
-// typedef struct future {
-//   void *result;
-//   sem_t lock;
-//   size_t retsz;
-// } future_t;
-
 typedef void *(*function_t)(void *, size_t, size_t*);
 
 typedef struct future_arg

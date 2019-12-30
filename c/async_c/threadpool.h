@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <pthread.h>
 
-enum status {Working, Free};
-
 typedef struct runnable
 {
   void (*function)(void *, size_t);
@@ -14,14 +12,22 @@ typedef struct runnable
   size_t argsz;
 } runnable_t;
 
+typedef struct q_runnable
+{
+  struct q_runnable *next;
+  runnable_t runnable;
+} q_runnable_t;
+
 typedef struct thread_pool
 {
   pthread_t *thread;        //Tablica wątków
   pthread_attr_t attr;
   sem_t mutex;
-  sem_t mutex_all;          //Semafor dysponuje pool_size zezwoleniami
-  enum status *working;     //Stan poszczególnych wątków
+  sem_t mutex_all;          //Semafor dysponuje num_threads zezwoleniami
+  int working;              //Informacja o tym czy wątki mają dają pracować
   size_t num_threads;       //Informacja o tym ile wątków jest zarezerwowanych w pamięci
+  q_runnable_t *queue;      //Kolejka zleceń które nie dostały przydzielonego wątku
+  q_runnable_t *last;       //Wskaźnik na koniec kolejki
 } thread_pool_t;
 
 int thread_pool_init(thread_pool_t *pool, size_t pool_size);
