@@ -56,6 +56,9 @@ static int put(thread_pool_t *pool, runnable_t runnable)
 static void* delayed_worker_start(void *arg)
 {
   int *err = malloc(sizeof(int));
+  if (err == NULL) {
+    return err;
+  }
   thread_pool_t *pool = ((thread_pool_t *) arg);
   *err = 0;
   runnable_t runnable;
@@ -94,29 +97,29 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     return EXIT_FAILURE;
   }
 
-  if (pthread_attr_init(&pool->attr)) {
-    fprintf(stderr, "Error in thread_pool_init – pthread_attr_init\n");
+  if ((err = pthread_attr_init(&pool->attr))) {
+    fprintf(stderr, "%d error in thread_pool_init – pthread_attr_init\n", err);
     free(pool->thread);
     return EXIT_FAILURE;
   }
 
-  if (sem_init(&pool->mutex_all, 0, 0)) {
-    fprintf(stderr, "Error in thread_pool_init – sem_init\n");
+  if ((err = sem_init(&pool->mutex_all, 0, 0))) {
+    fprintf(stderr, "%d error in thread_pool_init – sem_init\n", err);
     free(pool->thread);
     if (pthread_attr_destroy(&pool->attr)) {
-      fprintf(stderr, "Error in pthread_attr_destroy\n");
+      fprintf(stderr, "%d error in pthread_attr_destroy\n", err);
     }
     return EXIT_FAILURE;
   }
 
-  if (sem_init(&pool->mutex, 0, 1)) {
-    fprintf(stderr, "Error in thread_pool_init – sem_init\n");
+  if ((err = sem_init(&pool->mutex, 0, 1))) {
+    fprintf(stderr, "%d error in thread_pool_init – sem_init\n", err);
     free(pool->thread);
-    if (pthread_attr_destroy(&pool->attr)) {
-      fprintf(stderr, "Error in pthread_attr_destroy\n");
+    if ((err = pthread_attr_destroy(&pool->attr))) {
+      fprintf(stderr, "%d error in pthread_attr_destroy\n", err);
     }
-    if (sem_destroy(&pool->mutex_all)) {
-      fprintf(stderr, "Error in sem_destroy\n");
+    if ((err = sem_destroy(&pool->mutex_all))) {
+      fprintf(stderr, "%d error in sem_destroy\n", err);
     }
     return EXIT_FAILURE;
   }
