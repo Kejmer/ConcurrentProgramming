@@ -2,13 +2,6 @@
 #include <stdio.h>
 #include "threadpool.h"
 
-typedef struct async_arg
-{
-  thread_pool_t *pool;
-  int thread_num;
-  runnable_t runnable;
-} async_arg_t;
-
 //IMPLEMENTACJA KOLEJKI
 //**********************************************************************************************************************//
 
