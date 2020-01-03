@@ -7,13 +7,7 @@
 
 static int empty(thread_pool_t *pool)
 {
-  return pool->queue == NULL ? 0 : 1;
-}
-
-static void free_queue(q_runnable_t *queue) {
-  if (queue == NULL) return;
-  free_queue(queue->next);
-  free(queue);
+  return pool->queue == NULL ? 1 : 0;
 }
 
 static runnable_t pop(thread_pool_t *pool)
@@ -28,52 +22,53 @@ static runnable_t pop(thread_pool_t *pool)
   return result;
 }
 
-static int put(thread_pool_t *pool, runnable_t runnable)
+static void put(thread_pool_t *pool, runnable_t runnable)
 {
   q_runnable_t *new_q = malloc(sizeof(q_runnable_t));
   if (new_q == NULL) {
-    return EXIT_FAILURE;
+    exit(-1);
   }
   new_q->next = NULL;
   new_q->runnable = runnable;
   if (empty(pool)) {
     pool->queue = new_q;
+  } else {
+    pool->last->next = new_q;
   }
-  pool->queue = new_q;
-  return EXIT_SUCCESS;
+  pool->last = new_q;
 }
 
 //**********************************************************************************************************************//
+//OCZEKIWANIE NA ZADANIA DO WYKONANIA
 
-//Oczekiwanie na zadania do wykonania
 static void* delayed_worker_start(void *arg)
 {
-  int *err = malloc(sizeof(int));
-  if (err == NULL) {
-    return err;
-  }
+  int err;
   thread_pool_t *pool = ((thread_pool_t *) arg);
-  *err = 0;
   runnable_t runnable;
+  int skip;
 
-  while (pool->working) {
-    if ((*err = sem_wait(&pool->mutex_all))) {
-      return err;
+  while (pool->working || empty(pool) == 0) {
+    if ((err = sem_wait(&pool->mutex_all))) {
+      fprintf(stderr, "%d error in async – sem_wait\n", err);
+      exit(-1);
     }
-    if ((*err = sem_wait(&pool->mutex))) {
-      return err;
+    if ((err = sem_wait(&pool->mutex))) {
+      fprintf(stderr, "%d error in async – sem_wait\n", err);
+      exit(-1);
     }
-    if (pool->working) {
+    skip = 1;
+    if (empty(pool) == 0) {
       runnable = pop(pool);
+      skip = 0;
     }
-    if ((*err = sem_post(&pool->mutex))) {
-      return err;
+    if ((err = sem_post(&pool->mutex))) {
+      fprintf(stderr, "%d error in async – sem_post\n", err);
+      exit(-1);
     }
-    if (pool->working) {
-      (* runnable.function)(runnable.arg, runnable.argsz);
-    }
+    if (skip == 0) (* runnable.function)(runnable.arg, runnable.argsz);
   }
-  return err;
+  return 0;
 }
 
 //IMPLEMENTACJA PLIKU NAGŁÓWKOWEGO
@@ -87,13 +82,13 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
   pool->thread = malloc(num_threads * sizeof(pthread_t));
   if (pool->thread == NULL) {
     fprintf(stderr, "Error in thread_pool_init – malloc\n");
-    return EXIT_FAILURE;
+    return -1;
   }
 
   if ((err = pthread_attr_init(&pool->attr))) {
     fprintf(stderr, "%d error in thread_pool_init – pthread_attr_init\n", err);
     free(pool->thread);
-    return EXIT_FAILURE;
+    return -1;
   }
 
   if ((err = sem_init(&pool->mutex_all, 0, 0))) {
@@ -101,8 +96,9 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     free(pool->thread);
     if (pthread_attr_destroy(&pool->attr)) {
       fprintf(stderr, "%d error in pthread_attr_destroy\n", err);
+      exit(-1);
     }
-    return EXIT_FAILURE;
+    return -1;
   }
 
   if ((err = sem_init(&pool->mutex, 0, 1))) {
@@ -110,80 +106,97 @@ int thread_pool_init(thread_pool_t *pool, size_t num_threads)
     free(pool->thread);
     if ((err = pthread_attr_destroy(&pool->attr))) {
       fprintf(stderr, "%d error in pthread_attr_destroy\n", err);
+      exit(-1);
     }
     if ((err = sem_destroy(&pool->mutex_all))) {
       fprintf(stderr, "%d error in sem_destroy\n", err);
+      exit(-1);
     }
-    return EXIT_FAILURE;
+    return -1;
   }
 
   pool->working = 1;
   pool->queue = NULL;
+  pool->last = NULL;
 
   for (unsigned i = 0; i < num_threads; i++) {
     if ((err = pthread_create(&pool->thread[i], &pool->attr, &delayed_worker_start, pool))) {
       fprintf(stderr, "%d error in pthread_attr_init – pthread_create\n", err);
+      exit(-1);
     }
   }
-  return EXIT_SUCCESS;
+  return 0;
 }
 
 void thread_pool_destroy(thread_pool_t *pool)
 {
   int err;
   int *res;
+  if ((err = sem_wait(&pool->mutex))) {
+    fprintf(stderr, "%d error in defer – sem_wait\n", err);
+    exit(-1);
+  }
   pool->working = 0;
+  if ((err = sem_post(&pool->mutex))) {
+    fprintf(stderr, "%d error in defer – sem_post\n", err);
+    exit(-1);
+  }
 
   for (unsigned i = 0; i < pool->num_threads; i++) {
     if ((err = sem_post(&pool->mutex_all))) {
       fprintf(stderr, "%d error in thread_pool_destroy – sem_post\n", err);
+      exit(-1);
     }
   }
 
   for (unsigned i = 0; i < pool->num_threads; i++) {
     if (((err = pthread_join(pool->thread[i], (void **) &res)))) {
       fprintf(stderr, "%d error in thread_pool_destroy – pthread_join\n", err);
+      exit(-1);
     }
-    if (*res) {
-      fprintf(stderr, "%d error in thread_pool_destroy – invalid thread end\n", *res);
-    }
-    free(res);
   }
 
   free(pool->thread);
-  free_queue(pool->queue);
 
   if ((err = pthread_attr_destroy(&pool->attr))) {
     fprintf(stderr, "%d error in thread_pool_destroy – pthread_attr_destoy\n", err);
+    exit(-1);
   }
   if ((err = sem_destroy(&pool->mutex_all))) {
     fprintf(stderr, "%d error in thread_pool_destroy – sem_destroy\n", err);
+    exit(-1);
   }
   if ((err = sem_destroy(&pool->mutex))) {
     fprintf(stderr, "%d error in thread_pool_destroy – sem_destroy\n", err);
+    exit(-1);
   }
 }
 
 int defer(thread_pool_t *pool, runnable_t runnable)
 {
   int err;
+  if (pool->working == 0) return -1;
   if ((err = sem_wait(&pool->mutex))) {
     fprintf(stderr, "%d error in defer – sem_wait\n", err);
-    return EXIT_FAILURE;
+    return -1;
   }
-  if (put(pool, runnable)) {
-    fprintf(stderr, "Error in defer – fail at put\n");
-    return EXIT_FAILURE;
+  if (pool->working == 0) {
+    if ((err = sem_post(&pool->mutex))) {
+      fprintf(stderr, "%d error in defer – sem_post\n", err);
+      exit(-1);
+    }
+    return -1;
   }
+  put(pool, runnable);
   if ((err = sem_post(&pool->mutex))) {
     fprintf(stderr, "%d error in defer – sem_post\n", err);
-    return EXIT_FAILURE;
+    return -1;
   }
   if ((err = sem_post(&pool->mutex_all))) {
     fprintf(stderr, "%d error in defer – sem_post\n", err);
-    return EXIT_FAILURE;
+    return -1;
   }
-  return EXIT_SUCCESS;
+  return 0;
 }
 
 //**********************************************************************************************************************//
