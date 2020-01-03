@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <pthread.h>
 
+// Błąd funkcji bibliotecznej podczas funkcji init zwalnia zaalokowaną w tej funkcji pamięć i
+// zwraca kod błędu EXIT_FAILURE, błąd funkcji podczas zwalniania tej pamięci lub innych
+// funkcji implementowanych w tej bibliotece skutkuje awaryjnym wyjściem z kodem EXIT_FAILURE
+// Wywołanie defer po wywołaniu thread_pool_destroy skutkuje zwróceniem wartości EXIT_FAILURE
+
 typedef struct runnable
 {
   void (*function)(void *, size_t);
