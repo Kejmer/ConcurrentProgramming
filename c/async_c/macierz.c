@@ -53,6 +53,7 @@ int main()
 
   for (int i=0; i<k; i++) {
     sem_init(&matrix.rows_sem[i], 0, 1);
+    matrix.rows[i] = 0;
   }
 
   int val, time;
