@@ -42,7 +42,7 @@ static void count_cell(void *args, size_t argsz __attribute__((unused)))
 int main()
 {
   matrix_t matrix;
-  int n, k, size;
+  int n, k, size, err;
   scanf("%d%d", &k, &n);
   matrix.width = n;
   size = n*k;
@@ -63,7 +63,8 @@ int main()
   }
 
   thread_pool_t pool;
-  if (thread_pool_init(&pool, 4)) {
+  if ((err = thread_pool_init(&pool, 4))) {
+    fprintf(stderr, "%d error – thread_pool_init\n", err);
     exit(-1);
   }
 
