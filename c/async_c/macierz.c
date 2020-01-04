@@ -51,8 +51,16 @@ int main()
   matrix.cells = malloc(sizeof(int) * size);
   matrix.rows_sem = malloc(sizeof(sem_t) * k);
 
+  if (matrix.rows == NULL || matrix.time == NULL || matrix.cells == NULL || matrix.rows_sem == NULL) {
+    fprintf(stderr, "Bad malloc\n");
+    exit(-1);
+  }
+
   for (int i=0; i<k; i++) {
-    sem_init(&matrix.rows_sem[i], 0, 1);
+    if ((err = sem_init(&matrix.rows_sem[i], 0, 1))) {
+      fprintf(stderr, "%d error – sem_init\n", err);
+      exit(-1);
+    }
     matrix.rows[i] = 0;
   }
 
@@ -70,6 +78,11 @@ int main()
   }
 
   query_t *queries = malloc(sizeof(query_t) * size);
+  if (queries == NULL) {
+    fprintf(stderr, "Bad malloc\n");
+    exit(-1);
+  }
+
   runnable_t runnable;
   runnable.function = &count_cell;
   runnable.argsz = sizeof(query_t);
@@ -77,12 +90,13 @@ int main()
     queries[i].matrix = &matrix;
     queries[i].cellno = i;
     runnable.arg = (void *)&queries[i];
-    if (defer(&pool, runnable)) {
+    if ((err = defer(&pool, runnable))) {
+      fprintf(stderr, "%d error – defer \n", err);
       exit(-1);
     }
   }
 
-  thread_pool_destroy(&pool);
+  thread_pool_destroy(&pool); // czekamy aż wszystkie wątki się zakończą
   free(queries);
 
   for(int i=0; i<k; i++) {
