@@ -56,6 +56,7 @@ int map(thread_pool_t *pool, future_t *future, future_t *from,
   thread_pool_destroy(&pool);
   free(factorial);
   free(future);
+  free(result);
 
   return 0;
 }
