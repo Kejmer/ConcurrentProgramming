@@ -4,7 +4,6 @@
 #include <semaphore.h>
 #include "threadpool.h"
 
-
 typedef struct callable {
   void *(*function)(void *, size_t, size_t *);
   void *arg;
