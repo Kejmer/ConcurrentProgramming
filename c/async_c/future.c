@@ -24,7 +24,6 @@ static void user_receive(void *arg_temp, size_t argsz __attribute__((unused)))
   free(arg_temp);
 
   future->result = (*callable.function)(callable.arg, callable.argsz, &future->retsz);
-  // free(arg->callable.arg);
   sem_post(&future->lock);
 }
 
@@ -47,8 +46,6 @@ int async(thread_pool_t *pool, future_t *future, callable_t callable)
   sem_init(&future->lock, 0, 0);
   future_arg_t *arg = malloc(sizeof(future_arg_t));
   arg->callable = callable;
-  // arg->callable.arg = malloc(sizeof(callable.argsz));
-  // *arg->callable.arg = *callable.arg;
   arg->future = future;
 
   defer(pool, (runnable_t){.function = &user_receive,
