@@ -20,6 +20,6 @@ add_executable(lock lock.cpp)
 add_executable(condition condition.cpp)
 add_executable(thread-local thread-local.cpp)
 add_executable(thread-local-static thread-local-static.cpp)
-# add_executable(barrier barrier.cpp)
+add_executable(barrier barrier.cpp)
 
 install(TARGETS DESTINATION .)
