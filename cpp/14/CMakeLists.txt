@@ -16,9 +16,9 @@ macro (add_executable _name)
 endmacro()
 
 add_executable(mutual-excl mutual-excl.cpp)
-add_executable(peterson peterson.cpp)
+#add_executable(peterson peterson.cpp)
 add_executable(atomic-volatile atomic-volatile.cpp)
 add_executable(lockfree-stack lockfree-stack.cpp)
-#add_executable(dekker dekker.cpp)
+add_executable(dekker dekker.cpp)
 
 install(TARGETS DESTINATION .)

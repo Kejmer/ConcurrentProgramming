@@ -3,6 +3,8 @@
 #include <chrono>
 #include <array>
 
+using namespace std;
+
 const long counter = 5'000'000;
 
 long x = 0;
@@ -17,12 +19,15 @@ void critical_section(void) {
 }
 
 void local_section(void) {
+    cout << "local_section" << endl;
 }
 
 void entry_protocol(int nr) {
+    cout << "entry_protocol" << endl;
 }
 
 void exit_protocol(int nr) {
+    cout << "exit_protocol" << endl;
 }
 
 
